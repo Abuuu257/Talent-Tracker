@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events - Talent Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #012A61;
+            --secondary: #275A91;
+            --highlight: #FDC787;
+            --background: #A5C5CC;
+        }
+
+        body {
+            font-family: "Montserrat", sans-serif;
+            background-color: var(--background);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <!-- Navigation will be injected by JS based on role -->
+    <div id="navPlaceholder"></div>
+
+    <main class="max-w-7xl mx-auto pt-28 pb-20 px-6">
+        <!-- Page Header -->
+        <div class="mb-12">
+            <h1 class="text-4xl font-black text-[var(--primary)] mb-2">Events</h1>
+            <p id="eventsSubtitle" class="text-slate-600 font-medium">Discover and participate in upcoming athletic
+                events</p>
+        </div>
+
+        <!-- Admin: Create Event Button -->
+        <div id="adminControls" class="hidden mb-8">
+            <button id="createEventBtn"
+                class="bg-[var(--primary)] text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:bg-[var(--secondary)] transition-all flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Create New Event
+            </button>
+        </div>
+
+        <!-- Events Grid -->
+        <div id="eventsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Loading State -->
+            <div class="col-span-full flex justify-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary)]"></div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden col-span-full text-center py-20">
+            <div class="text-6xl mb-4">📅</div>
+            <h3 class="text-2xl font-bold text-slate-700 mb-2">No Events Yet</h3>
+            <p class="text-slate-500">Check back soon for upcoming events!</p>
+        </div>
+    </main>
+
+    <!-- Create/Edit Event Modal -->
+    <div id="eventModal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[250] hidden flex items-start justify-center overflow-y-auto pt-10 pb-10">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-4xl overflow-hidden transform transition-all scale-95 opacity-0 relative"
+            id="eventModalContent">
+
+            <!-- Modal Header -->
+            <div class="bg-[var(--primary)] px-8 py-6 text-white flex justify-between items-center">
+                <div>
+                    <h3 class="text-2xl font-black" id="modalTitle">Create New Event</h3>
+                    <p class="text-blue-200 text-sm font-medium">Fill in the details to announce a new athletic event
+                    </p>
+                </div>
+                <button type="button" onclick="closeEventModal()"
+                    class="bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form id="eventForm" class="p-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+
+                    <!-- Section: Basic Information -->
+                    <div class="md:col-span-2">
+                        <h4 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 border-b pb-2">Basic
+                            Information</h4>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-black text-slate-500 uppercase mb-2 tracking-wide">Event Title
+                            *</label>
+                        <input type="text" id="eventTitle" required
+                            class="w-full px-5 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-[var(--primary)] focus:outline-none transition-all"
+                            placeholder="e.g. National Youth Athletics Championship 2025">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-black text-slate-500 uppercase mb-2 tracking-wide">Description
+                            *</label>
+                        <textarea id="eventDescription" required rows="3"
+                            class="w-full px-5 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-[var(--primary)] focus:outline-none transition-all"
+                            placeholder="Detailed overview of the event..."></textarea>
+                    </div>
+
+                    <!-- Section: Logistics -->
+                    <div class="md:col-span-2">
+                        <h4 class="text-sm font-black text-slate-400 uppercase tracking-widest mt-4 mb-4 border-b pb-2">
+                            Date & Location</h4>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase mb-2 tracking-wide">Event Date
+                            *</label>
+                        <input type="date" id="eventDate" required
+                            class="w-full px-5 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-[var(--primary)] focus:outline-none transition-all">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase mb-2 tracking-wide">Event
+                            Time</label>
+                        <input type="time" id="eventTime"
+                            class="w-full px-5 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-[var(--primary)] focus:outline-none transition-all">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase mb-2 tracking-wide">Venue
+                            *</label>
+                        <input type="text" id="eventVenue" required
+                            class="w-full px-5 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-[var(--primary)] focus:outline-none transition-all"
+                            placeholder="e.g. National Stadium">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase mb-2 tracking-wide">City
+                            *</label>
+                        <input type="text" id="eventCity" required
+                            class="w-full px-5 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-[var(--primary)] focus:outline-none transition-all"
+                            placeholder="e.g. Colombo">
+                    </div>
+
+                    <!-- Section: Participation Details -->
+                    <div class="md:col-span-2">
+                        <h4 class="text-sm font-black text-slate-400 uppercase tracking-widest mt-4 mb-4 border-b pb-2">
+                            Participation & Requirements</h4>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase mb-2 tracking-wide">Category
+                            *</label>
+                        <select id="eventCategory" required
+                            class="w-full px-5 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-[var(--primary)] focus:outline-none transition-all">
+                            <option value="">Select Category</option>
+                            <option value="U12">Under 12</option>
+                            <option value="U14">Under 14</option>
+                            <option value="U16">Under 16</option>
+                            <option value="U18">Under 18</option>
+                            <option value="U20">Under 20</option>
+                            <option value="Open">Open</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase mb-2 tracking-wide">Registration
+                            Deadline</label>
+                        <input type="date" id="eventDeadline"
+                            class="w-full px-5 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-[var(--primary)] focus:outline-none transition-all">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-black text-slate-500 uppercase mb-2 tracking-wide">Eligibility
+                            Criteria</label>
+                        <textarea id="eventEligibility" rows="2"
+                            class="w-full px-5 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-[var(--primary)] focus:outline-none transition-all"
+                            placeholder="e.g. Must be a registered member of a sports club..."></textarea>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-black text-slate-500 uppercase mb-2 tracking-wide">Rules &
+                            Regulations</label>
+                        <textarea id="eventRules" rows="2"
+                            class="w-full px-5 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-[var(--primary)] focus:outline-none transition-all"
+                            placeholder="Point-wise rules and regulations..."></textarea>
+                    </div>
+
+                    <!-- Section: Contact & Media -->
+                    <div class="md:col-span-2">
+                        <h4 class="text-sm font-black text-slate-400 uppercase tracking-widest mt-4 mb-4 border-b pb-2">
+                            Contact & Media</h4>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase mb-2 tracking-wide">Contact
+                            Email</label>
+                        <input type="email" id="eventContactEmail"
+                            class="w-full px-5 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-[var(--primary)] focus:outline-none transition-all"
+                            placeholder="admin@federation.com">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase mb-2 tracking-wide">Contact
+                            Phone</label>
+                        <input type="tel" id="eventContactPhone"
+                            class="w-full px-5 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-[var(--primary)] focus:outline-none transition-all"
+                            placeholder="+94 77 123 4567">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-black text-slate-500 uppercase mb-2 tracking-wide">Banner Image
+                            URL</label>
+                        <input type="url" id="eventImageUrl"
+                            class="w-full px-5 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-[var(--primary)] focus:outline-none transition-all"
+                            placeholder="https://images.unsplash.com/photo-...">
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="flex gap-4 pt-10 sticky bottom-0 bg-white pb-2 mt-4 decoration-white">
+                    <button type="button" onclick="closeEventModal()"
+                        class="flex-1 py-4 rounded-2xl font-black text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all uppercase tracking-widest text-sm">
+                        Dismiss
+                    </button>
+                    <button type="submit"
+                        class="flex-[2] py-4 rounded-2xl font-black bg-[var(--primary)] text-white hover:bg-[var(--secondary)] shadow-xl shadow-blue-900/10 transition-all uppercase tracking-widest text-sm transform hover:-translate-y-1 active:translate-y-0">
+                        Publish Event
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="events.js"></script>
+</body>
+
+</html>
