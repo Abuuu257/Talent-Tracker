@@ -94,15 +94,24 @@ if (photoInput) {
     photoInput.addEventListener("change", function () {
         const file = this.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
+            const isPdf = (file.type && file.type.toLowerCase().includes("pdf")) || /\.pdf$/i.test(file.name);
+            if (isPdf) {
                 if (previewImg) {
-                    previewImg.src = e.target.result;
+                    previewImg.src = "https://cdn-icons-png.flaticon.com/512/337/337946.png";
                     previewImg.classList.remove("hidden");
                     if (photoPreviewIcon) photoPreviewIcon.classList.add("hidden");
                 }
+            } else {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    if (previewImg) {
+                        previewImg.src = e.target.result;
+                        previewImg.classList.remove("hidden");
+                        if (photoPreviewIcon) photoPreviewIcon.classList.add("hidden");
+                    }
+                }
+                reader.readAsDataURL(file);
             }
-            reader.readAsDataURL(file);
         }
     });
 }
@@ -174,27 +183,25 @@ form.addEventListener("submit", async (e) => {
     const certInput = document.getElementById("certDoc");
     const certErr = document.getElementById("error-certDoc");
 
-    // Check if missing
-    if (!certInput.files.length) {
-        // Maybe existing?
-        // This logic is tricky without checking existing state, but let's assume if field is empty and we keep going,
-        // we might need to check if existing cert exists.
-        // For now, let's just warn if empty, unless we implement "existing file" indicator in UI like CreateProfile.
-        // The original code enforced it. I'll maintain that or check data.
-        // Wait, the API save will overwrite certUrl with null if we don't send it?
-        // No, my backend logic for coach update replaces certUrl.
-        // I should handle "keep existing" logic.
-        // For now, let's assume user must upload if required.
-        // Or check if data.certDoc exists.
-        // The UI doesn't clearly show "Saved" for certDoc in the original code (unlike athlete profile).
-        // I'll leave validation as is (required).
+    // Check if we have an existing certificate
+    const previewImgEl = document.getElementById("previewImg"); // This is for photo though. 
+    // Wait, the coach profile doesn't show a certificate preview.
+    // I should check existingData.certDoc.
+
+    let certExists = false;
+    try {
+        const d = await getCoachProfile(currentUID);
+        if (d && d.exists && d.certDoc) certExists = true;
+    } catch (e) { }
+
+    if (!certInput.files.length && !certExists) {
         certErr.classList.add("visible");
         certInput.classList.add("input-error");
         isValid = false;
-    } else {
+    } else if (certInput.files.length > 0) {
         const file = certInput.files[0];
-        if (file.size > 2 * 1024 * 1024) {
-            certErr.textContent = "File too large (Max 2MB)";
+        if (file.size > 5 * 1024 * 1024) {
+            certErr.textContent = "File too large (Max 5MB)";
             certErr.classList.add("visible");
             isValid = false;
         }

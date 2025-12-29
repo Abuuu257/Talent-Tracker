@@ -179,8 +179,11 @@ onAuthChange(async (user) => {
                         await saveCoachProfile(user.uid, coachData);
                     }
 
-                    navImg.src = url;
-                    if (mobileImg) mobileImg.src = url;
+                    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+                    const displayUrl = isPdf ? "https://cdn-icons-png.flaticon.com/512/337/337946.png" : url;
+
+                    navImg.src = displayUrl;
+                    if (mobileImg) mobileImg.src = displayUrl;
                     navBtnText.textContent = name;
                     alert("Profile picture updated!");
                 } catch (err) {

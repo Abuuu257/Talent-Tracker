@@ -219,15 +219,31 @@ function openEventModal(event = null) {
     title.textContent = event ? "Edit Event" : "Create New Event";
 
     if (event) {
+        // Normalizing date to YYYY-MM-DD for input[type="date"]
+        const formatDateForInput = (dateStr) => {
+            if (!dateStr) return '';
+            // If it's a date string from MySQL (YYYY-MM-DD), use it directly
+            if (typeof dateStr === 'string' && dateStr.includes('T')) {
+                return dateStr.split('T')[0];
+            }
+            if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+                return dateStr.substring(0, 10);
+            }
+            // Fallback for Date objects
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return '';
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        };
+
         // Pre-fill form with event data
         document.getElementById("eventTitle").value = event.title || '';
         document.getElementById("eventDescription").value = event.description || '';
-        document.getElementById("eventDate").value = event.event_date ? event.event_date.substring(0, 10) : '';
+        document.getElementById("eventDate").value = formatDateForInput(event.event_date);
         document.getElementById("eventTime").value = event.event_time || '';
         document.getElementById("eventVenue").value = event.venue || '';
         document.getElementById("eventCity").value = event.city || '';
         document.getElementById("eventCategory").value = event.category || '';
-        document.getElementById("eventDeadline").value = event.registration_deadline ? event.registration_deadline.substring(0, 10) : '';
+        document.getElementById("eventDeadline").value = formatDateForInput(event.registration_deadline);
         document.getElementById("eventEligibility").value = event.eligibility || '';
         document.getElementById("eventRules").value = event.rules || '';
         document.getElementById("eventRequirements").value = event.requirements || '';
@@ -235,8 +251,10 @@ function openEventModal(event = null) {
         document.getElementById("eventContactEmail").value = event.contact_email || '';
         document.getElementById("eventContactPhone").value = event.contact_phone || '';
         document.getElementById("eventImageUrl").value = event.image_url || '';
+        document.getElementById("eventStatus").value = event.status || 'upcoming';
     } else {
         form.reset();
+        document.getElementById("eventStatus").value = 'upcoming';
     }
 
     modal.classList.remove("hidden");
@@ -280,8 +298,9 @@ async function handleEventSubmit(e) {
         contact_email: document.getElementById("eventContactEmail").value || null,
         contact_phone: document.getElementById("eventContactPhone").value || null,
         image_url: document.getElementById("eventImageUrl").value || null,
-        created_by: currentUser.uid || currentUser.id,
-        status: 'upcoming'
+        created_by: (currentUser.uid && !isNaN(currentUser.uid)) ? parseInt(currentUser.uid) :
+            (currentUser.id && !isNaN(currentUser.id) ? parseInt(currentUser.id) : null),
+        status: document.getElementById("eventStatus").value || 'upcoming'
     };
 
     try {
@@ -289,19 +308,24 @@ async function handleEventSubmit(e) {
 
         if (editingEventId) {
             await API.updateEvent(editingEventId, eventData);
+            hideLoading();
             await showAlert("Event updated successfully!", "Success");
         } else {
             await API.createEvent(eventData);
+            hideLoading();
             await showAlert("Event created successfully! Emails sent to all athletes.", "Success");
         }
 
         closeEventModal();
         await loadEvents();
     } catch (error) {
-        console.error("Error saving event:", error);
-        await showAlert("Failed to save event. Please try again.", "Error");
-    } finally {
         hideLoading();
+        console.error("Error saving event:", error);
+        let errorMsg = "Failed to save event. Please check your connection.";
+        if (error.message) {
+            errorMsg = `Failed to save event: ${error.message}`;
+        }
+        await showAlert(errorMsg, "Error");
     }
 }
 
@@ -326,13 +350,13 @@ window.deleteEventConfirm = async function (eventId) {
     try {
         showLoading();
         await API.deleteEvent(eventId);
+        hideLoading();
         await showAlert("Event deleted successfully!", "Success");
         await loadEvents();
     } catch (error) {
+        hideLoading();
         console.error("Error deleting event:", error);
         await showAlert("Failed to delete event. Please try again.", "Error");
-    } finally {
-        hideLoading();
     }
 };
 
@@ -340,12 +364,12 @@ window.registerForEvent = async function (eventId) {
     try {
         showLoading();
         await API.registerForEvent(eventId, currentUser.uid || currentUser.id);
+        hideLoading();
         await showAlert("Successfully registered for the event!", "Success");
     } catch (error) {
+        hideLoading();
         console.error("Error registering:", error);
         await showAlert(error.message || "Failed to register for event.", "Error");
-    } finally {
-        hideLoading();
     }
 };
 

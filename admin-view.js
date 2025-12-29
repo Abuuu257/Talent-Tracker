@@ -235,3 +235,16 @@ function docItem(label, url) {
         </div>
     `;
 }
+// Logout Logic
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+        try {
+            await signOut();
+            localStorage.removeItem("tt_username");
+            localStorage.removeItem("tt_role");
+            window.location.href = "index.html";
+        } catch (error) {
+            console.error("Logout Error", error);
+        }
+    });
+}

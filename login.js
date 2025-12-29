@@ -121,25 +121,11 @@ if (loginBtn) {
             return;
         }
 
-        // Fed check
+        // Fed check - Now uses actual database via loginUser
         if (currentRole === "federation") {
-            if (username === "admin" && password === "admin123") {
-                showLoading();
-                const adminUser = {
-                    id: 'admin',
-                    username: 'Admin',
-                    email: 'federation@talenttracker.com',
-                    role: 'federation'
-                };
-                localStorage.setItem('user', JSON.stringify(adminUser));
-                localStorage.setItem("tt_username", "Federation Admin");
-                localStorage.setItem("tt_role", "federation");
-                window.location.href = "federation-home.html";
-                return;
-            } else {
-                showErr("Invalid Admin Credentials.");
-                return;
-            }
+            // If it's the default 'admin' username, it won't look like an email
+            // loginUser handles the email/username lookup if we keep it simple here
+            // or we just let it fall through to the main login logic below.
         }
 
         loginBtn.disabled = true;

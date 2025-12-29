@@ -4,7 +4,7 @@ const db = require('../db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const SECRET_KEY = 'your_super_secret_key_change_this';
+const SECRET_KEY = process.env.JWT_SECRET || 'your_super_secret_key_change_this';
 
 // REGISTER
 router.post('/register', async (req, res) => {
@@ -39,11 +39,11 @@ router.post('/register', async (req, res) => {
 
 // LOGIN
 router.post('/login', async (req, res) => {
-    const { email, password, role } = req.body;
+    const { email: identifier, password, role } = req.body;
 
     try {
-        let query = 'SELECT * FROM users WHERE email = ?';
-        let params = [email];
+        let query = 'SELECT * FROM users WHERE (email = ? OR username = ?)';
+        let params = [identifier, identifier];
 
         if (role) {
             query += ' AND role = ?';

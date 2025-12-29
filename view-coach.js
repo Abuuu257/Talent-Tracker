@@ -87,7 +87,10 @@ if (profilePicInput) {
         const file = e.target.files[0];
         if (!file || !currentCoachId) return;
 
-        if (!file.type.startsWith('image/')) return alert("Select image");
+        const isImage = file.type.startsWith('image/') || /\.(jpe?g|png)$/i.test(file.name);
+        const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+
+        if (!isImage && !isPdf) return alert("Select image or PDF");
         if (file.size > 5 * 1024 * 1024) return alert("Max 5MB");
 
         try {
@@ -100,12 +103,16 @@ if (profilePicInput) {
                 await saveCoachProfile(currentCoachId, currentCoachData);
             }
 
-            if (profilePicDisplay) {
+            if (profilePicDisplay && !isPdf) {
                 profilePicDisplay.src = url;
+                profilePicDisplay.classList.remove("skeleton");
+            } else if (profilePicDisplay && isPdf) {
+                profilePicDisplay.src = "https://cdn-icons-png.flaticon.com/512/337/337946.png"; // PDF Icon
                 profilePicDisplay.classList.remove("skeleton");
             }
             const navImg = document.getElementById("navUserImg");
-            if (navImg) navImg.src = url;
+            if (navImg && !isPdf) navImg.src = url;
+            else if (navImg && isPdf) navImg.src = "https://cdn-icons-png.flaticon.com/512/337/337946.png";
 
             alert("Updated!");
         } catch (err) {
@@ -198,8 +205,14 @@ function loadDashboardData(data, user) {
     const docsSection = document.getElementById("documentsSection");
     if (docsSection) {
         let docsHTML = '';
-        if (data.profilePic) docsHTML += createDocumentCard("Profile Picture", data.profilePic, "image");
-        if (data.certDoc) docsHTML += createDocumentCard("Certificate", data.certDoc, "pdf");
+        if (data.profilePic) {
+            const isPdf = data.profilePic.toLowerCase().includes('.pdf') || data.profilePic.toLowerCase().includes('pdf');
+            docsHTML += createDocumentCard("Profile Picture", data.profilePic, isPdf ? "pdf" : "image");
+        }
+        if (data.certDoc) {
+            const isPdf = data.certDoc.toLowerCase().includes('.pdf') || data.certDoc.toLowerCase().includes('pdf');
+            docsHTML += createDocumentCard("Certificate", data.certDoc, isPdf ? "pdf" : "image");
+        }
 
         if (docsHTML === '') docsHTML = '<p class="text-gray-500 text-sm italic">No documents uploaded</p>';
         docsSection.innerHTML = docsHTML;

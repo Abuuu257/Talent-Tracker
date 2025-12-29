@@ -1,5 +1,6 @@
-export const API_URL = 'http://localhost:3000/api';
-export const BACKEND_URL = 'http://localhost:3000';
+const isLocal = !window.location.hostname || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+export const BACKEND_URL = isLocal ? 'http://localhost:3000' : window.location.origin;
+export const API_URL = `${BACKEND_URL}/api`;
 
 export async function login(email, password, role) {
     const res = await fetch(`${API_URL}/auth/login`, {
@@ -195,7 +196,10 @@ export async function getAllCoaches() {
 export async function getUserByUsername(username) {
     const res = await fetch(`${API_URL}/auth/user/${username}`);
     if (res.status === 404) return null;
-    if (!res.ok) throw new Error('Failed to fetch user');
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to fetch user');
+    }
     return res.json();
 }
 

@@ -357,7 +357,7 @@ export function showAlert(message, title = "Alert") {
     if (!modal) {
       modal = document.createElement("div");
       modal.id = "customAlertModal";
-      modal.className = "fixed inset-0 bg-black/50 backdrop-blur-sm z-[250] hidden flex items-center justify-center";
+      modal.className = "fixed inset-0 bg-black/50 backdrop-blur-sm z-[11000] hidden flex items-center justify-center";
       modal.innerHTML = `
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 transform transition-all scale-95 opacity-0" id="customAlertContent">
           <h3 class="text-2xl font-black text-[#012A61] mb-4" id="customAlertTitle"></h3>
@@ -376,7 +376,8 @@ export function showAlert(message, title = "Alert") {
     const content = document.getElementById("customAlertContent");
 
     titleEl.textContent = title;
-    messageEl.textContent = message;
+    messageEl.innerHTML = message;
+
 
     // Show modal
     modal.classList.remove("hidden");
@@ -413,7 +414,7 @@ export function showConfirm(message, title = "Confirm") {
     if (!modal) {
       modal = document.createElement("div");
       modal.id = "customConfirmModal";
-      modal.className = "fixed inset-0 bg-black/50 backdrop-blur-sm z-[250] hidden flex items-center justify-center";
+      modal.className = "fixed inset-0 bg-black/50 backdrop-blur-sm z-[11000] hidden flex items-center justify-center";
       modal.innerHTML = `
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 transform transition-all scale-95 opacity-0" id="customConfirmContent">
           <h3 class="text-2xl font-black text-[#012A61] mb-4" id="customConfirmTitle"></h3>

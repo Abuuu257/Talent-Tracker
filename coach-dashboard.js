@@ -66,7 +66,7 @@ if (profilePicInput) {
         const file = e.target.files[0];
         if (!file || !currentCoachId) return;
 
-        if (!file.type.startsWith('image/')) return alert("Select image");
+        if (!file.type.startsWith('image/') && !(file.type && file.type.toLowerCase().includes('pdf')) && !file.name.toLowerCase().endsWith('.pdf')) return alert("Select image or PDF");
         if (file.size > 5 * 1024 * 1024) return alert("Max 5MB");
 
         try {

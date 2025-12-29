@@ -265,11 +265,11 @@ if (mobileBackdrop) mobileBackdrop.addEventListener('click', () => toggleMobileM
 
 const handleLogout = async () => {
     try {
+        await signOut();
         localStorage.removeItem("tt_username");
         localStorage.removeItem("tt_role");
-        // No firebase signOut needed if we are just using local auth state, but `signOut` function is imported if needed.
         window.location.href = "index.html";
-    } catch (error) { console.error("Logout Error", error); }
+    } catch (error) { }
 };
 if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
 if (mobileLogoutBtn) mobileLogoutBtn.addEventListener("click", handleLogout);

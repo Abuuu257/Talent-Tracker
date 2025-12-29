@@ -192,8 +192,13 @@ async function loadProfileForEdit() {
                     let src = docs[key];
 
                     if (key === 'profilePic') {
-                        if (src.startsWith('http')) src += "?t=" + new Date().getTime();
-                        prevDiv.innerHTML = `<img src="${src}" class="w-20 h-20 rounded border border-gray-300 object-cover"><span class="text-xs text-green-600 font-bold block mt-1">✓ Current Saved</span>`;
+                        const isPdf = src.toLowerCase().includes('.pdf') || src.toLowerCase().includes('pdf');
+                        if (isPdf) {
+                            prevDiv.innerHTML = `<img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" class="w-10 h-10 rounded object-contain"><span class="text-xs text-green-600 font-bold block mt-1">✓ Current Saved (PDF)</span>`;
+                        } else {
+                            if (src.startsWith('http')) src += "?t=" + new Date().getTime();
+                            prevDiv.innerHTML = `<img src="${src}" class="w-20 h-20 rounded border border-gray-300 object-cover"><span class="text-xs text-green-600 font-bold block mt-1">✓ Current Saved</span>`;
+                        }
                     } else {
                         prevDiv.innerHTML = `<a href="${src}" target="_blank" class="text-blue-600 underline text-sm">View Saved File</a> <span class="text-xs text-green-600 font-bold">✓ Saved</span>`;
                     }
@@ -367,18 +372,11 @@ window.submitProfile = async function () {
         if (file) {
             // Relaxed validation: Allow checking extension if type is missing or generic
             const isImage = file.type.startsWith("image/") || /\.(jpe?g|png)$/i.test(file.name);
-            const isPdf = file.type === "application/pdf" || file.name.endsWith(".pdf");
+            const isPdf = (file.type && file.type.toLowerCase().includes("pdf")) || /\.pdf$/i.test(file.name);
 
-            if (id === "profilePic") {
-                if (!isImage) {
-                    toggleError(`err-${id}`, "Invalid format (Image only)");
-                    hasRequiredError = true;
-                }
-            } else {
-                if (!isImage && !isPdf) {
-                    toggleError(`err-${id}`, "Invalid format (Image or PDF only)");
-                    hasRequiredError = true;
-                }
+            if (!isImage && !isPdf) {
+                toggleError(`err-${id}`, "Invalid format (Image or PDF only)");
+                hasRequiredError = true;
             }
 
             if (file.size > 5 * 1024 * 1024) { // Increased to 5MB
@@ -394,6 +392,8 @@ window.submitProfile = async function () {
     if (consentContainer && !consentContainer.classList.contains("hidden")) {
         checkFile("consentDoc", "preview_consentDoc");
     }
+
+    checkFile("clubIDDoc", "preview_clubIDDoc", true);
 
     requiredIds.forEach(id => {
         const el = document.getElementById(id);

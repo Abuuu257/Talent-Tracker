@@ -188,9 +188,17 @@ function loadAthleteProfileData() {
 
     if (athleteDocData.documents?.profilePic) {
         let imgUrl = athleteDocData.documents.profilePic;
-        if (imgUrl.startsWith('/')) imgUrl = BACKEND_URL + imgUrl; // Fix relative path
+        const isPdf = imgUrl.toLowerCase().includes('.pdf') || imgUrl.toLowerCase().includes('pdf');
 
-        if (profilePicEl) profilePicEl.src = imgUrl.startsWith('http') ? imgUrl + "?t=" + new Date().getTime() : imgUrl;
+        if (imgUrl.startsWith('/')) imgUrl = BACKEND_URL + imgUrl;
+
+        if (profilePicEl) {
+            if (isPdf) {
+                profilePicEl.src = "https://cdn-icons-png.flaticon.com/512/337/337946.png";
+            } else {
+                profilePicEl.src = imgUrl.startsWith('http') ? imgUrl + "?t=" + new Date().getTime() : imgUrl;
+            }
+        }
     }
 
     updateHeaderPBs();
@@ -209,8 +217,7 @@ profilePicInput?.addEventListener("change", async (e) => {
     if (!file) return;
     try {
         showLoading();
-        showMessage("Updating image...", "info");
-
+        const isPdf = (file.type && file.type.toLowerCase().includes("pdf")) || /\.pdf$/i.test(file.name);
         const downloadUrl = await uploadFile(file, currentUID, "profilePic");
 
         // Partial update logic - we need to duplicate logic or create partial update route.
@@ -239,8 +246,14 @@ profilePicInput?.addEventListener("change", async (e) => {
         let displayUrl = downloadUrl;
         if (displayUrl.startsWith('/')) displayUrl = BACKEND_URL + displayUrl;
 
-        if (profilePicEl) profilePicEl.src = displayUrl;
-        showMessage("Image updated!", "success");
+        if (profilePicEl) {
+            if (isPdf) {
+                profilePicEl.src = "https://cdn-icons-png.flaticon.com/512/337/337946.png"; // PDF Icon
+            } else {
+                profilePicEl.src = displayUrl;
+            }
+        }
+        showMessage("Profile photo updated!", "success");
     } catch (err) {
         showMessage("Failed to upload: " + err.message, "error");
     } finally {
@@ -389,7 +402,7 @@ function renderAchievements() {
                     <input type="text" id="slot_${i}_place" placeholder="Place (e.g. 1st)" class="w-full text-xs p-2 rounded border border-gray-300 outline-none">
                     
                     <div class="flex gap-2 items-center pt-1">
-                        <input type="file" id="slot_${i}_file" accept="image/*, application/pdf" class="hidden" onchange="document.getElementById('slot_${i}_btn').textContent = this.files[0].name">
+                        <input type="file" id="slot_${i}_file" accept=".jpg, .jpeg, .png, .pdf, application/pdf, image/png, image/jpeg, image/jpg" class="hidden" onchange="document.getElementById('slot_${i}_btn').textContent = this.files[0].name">
                         <button onclick="document.getElementById('slot_${i}_file').click()" id="slot_${i}_btn" class="text-[10px] bg-white text-gray-600 border border-gray-300 px-3 py-2 rounded-lg hover:bg-gray-100 flex-1 text-left truncate">Select File</button>
                         <button onclick="uploadSlot(${i}, this)" class="px-3 py-1 bg-[var(--highlight)] text-[var(--primary)] font-bold rounded-lg hover:bg-yellow-400 shadow-md transition text-xs">Add</button>
                     </div>
@@ -471,7 +484,7 @@ window.viewDocument = (url) => {
     docContentArea.innerHTML = '<p class="text-gray-500">Loading...</p>';
     docViewModal.classList.remove('hidden');
 
-    const isPdf = url.includes('application/pdf') || url.endsWith('.pdf') || url.includes('type=pdf');
+    const isPdf = url.includes('application/pdf') || /\.pdf$/i.test(url) || url.includes('type=pdf');
     if (isPdf) {
         docContentArea.innerHTML = `<iframe src="${url}" class="w-full h-full border-none rounded"></iframe>`;
     } else {

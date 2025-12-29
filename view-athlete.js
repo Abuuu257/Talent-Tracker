@@ -136,8 +136,16 @@ async function loadAthleteData() {
             // Docs
             const d = data.documents || {};
             let picUrl = d.profilePic || "https://via.placeholder.com/300?text=No+Photo";
-            if (picUrl.startsWith('/')) picUrl = BACKEND_URL + picUrl; // FIX RELATIVE PATH
-            athletePic.src = picUrl;
+            const isPdf = picUrl.toLowerCase().includes('.pdf') || picUrl.toLowerCase().includes('pdf');
+            if (picUrl.startsWith('/')) picUrl = BACKEND_URL + picUrl;
+
+            if (athletePic) {
+                if (isPdf) {
+                    athletePic.src = "https://cdn-icons-png.flaticon.com/512/337/337946.png";
+                } else {
+                    athletePic.src = picUrl;
+                }
+            }
 
             if (d.idDoc) {
                 btnIdDoc.href = d.idDoc;

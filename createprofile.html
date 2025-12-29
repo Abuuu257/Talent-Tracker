@@ -231,9 +231,10 @@
             <div class="space-y-5">
                 <div>
                     <label class="label-style" for="profilePic">Profile Picture</label>
-                    <div id="preview_profilePic" class="mb-2 hidden"></div> <input class="input" type="file"
-                        id="profilePic" accept="image/png, image/jpeg, image/jpg">
-                    <small class="text-gray-600 text-sm">Max size: 2MB | Formats: JPG, JPEG, PNG (Optional)</small>
+                    <div id="preview_profilePic" class="mb-2 hidden"></div>
+                    <input class="input" type="file" id="profilePic"
+                        accept=".jpg, .jpeg, .png, .pdf, application/pdf, image/png, image/jpeg, image/jpg">
+                    <small class="text-gray-600 text-sm">Max size: 2MB | Formats: JPG, JPEG, PNG, PDF (Optional)</small>
                     <p class="error-text" id="err-profilePic">Invalid file type or size (Max 2MB).</p>
                 </div>
                 <div>
@@ -307,7 +308,8 @@
                 <div>
                     <label class="label-style">Official ID / Postal ID </label>
                     <div id="preview_idDoc" class="mb-2 hidden"></div>
-                    <input type="file" class="input p-2" id="idDoc" accept="image/*, application/pdf" required>
+                    <input type="file" class="input p-2" id="idDoc"
+                        accept=".jpg, .jpeg, .png, .pdf, application/pdf, image/png, image/jpeg, image/jpg" required>
                     <small class="text-gray-500">Formats: Image or PDF. Max 5MB.</small>
                     <p class="error-text" id="err-idDoc">Official ID is required (Valid Image or PDF).</p>
                 </div>
@@ -343,7 +345,8 @@
                     <p class="text-xs text-yellow-700 mb-2 font-medium">We noticed you are Under 18. This document is
                         mandatory.</p>
                     <div id="preview_consentDoc" class="mb-2 hidden"></div>
-                    <input type="file" class="input p-2 bg-white" id="consentDoc" accept="application/pdf, image/*">
+                    <input type="file" class="input p-2 bg-white" id="consentDoc"
+                        accept=".jpg, .jpeg, .png, .pdf, application/pdf, image/png, image/jpeg, image/jpg">
                     <small class="text-gray-500">Formats: PDF or Image. Max 2MB.</small>
                     <p class="error-text" id="err-consentDoc">Mandatory for athletes under 18 (Max 2MB).</p>
                 </div>
@@ -412,7 +415,8 @@
                     <label class="label-style">School/Club ID Letter <span
                             class="text-gray-500 text-xs ml-2 font-normal">(Optional)</span></label>
                     <div id="preview_clubIDDoc" class="mb-2 hidden"></div>
-                    <input type="file" class="input p-2" id="clubIDDoc" accept="image/*, application/pdf">
+                    <input type="file" class="input p-2" id="clubIDDoc"
+                        accept=".jpg, .jpeg, .png, .pdf, application/pdf, image/png, image/jpeg, image/jpg">
                     <small class="text-gray-500">Formats: Clear Photo or PDF.</small>
                     <p class="error-text" id="err-clubIDDoc">Invalid file type or size.</p>
                 </div>

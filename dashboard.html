@@ -241,7 +241,8 @@
                 class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[var(--secondary)]/10 to-transparent rounded-full -mr-32 -mt-32">
             </div>
 
-            <input type="file" id="profilePicInput" class="hidden" accept="image/*">
+            <input type="file" id="profilePicInput" class="hidden"
+                accept=".jpg, .jpeg, .png, .pdf, application/pdf, image/png, image/jpeg, image/jpg">
             <div class="profile-pic-wrapper flex-shrink-0 group/pic cursor-pointer"
                 onclick="document.getElementById('profilePicInput').click()">
                 <img id="profilePic" src="https://via.placeholder.com/150" alt="Profile"
