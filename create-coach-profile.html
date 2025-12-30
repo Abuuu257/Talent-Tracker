@@ -205,7 +205,8 @@
                     <div>
                         <label class="label-style">Date of Birth</label>
                         <input type="date" id="dob" class="input" required>
-                        <p id="error-dob" class="error-text">Date of birth is required.</p>
+                        <p id="error-dob" class="error-text">You must be at least 22 years old to register as a coach.
+                        </p>
                     </div>
                     <div>
                         <label class="label-style">Nationality</label>
@@ -214,8 +215,11 @@
                     </div>
                     <div>
                         <label class="label-style">NIC / Passport Number</label>
-                        <input type="text" id="nic" class="input" placeholder="National ID or Passport No." required>
+                        <input type="text" id="nic" class="input"
+                            placeholder="e.g., 123456789V or 200012345678 or N1234567" required>
                         <p id="error-nic" class="error-text">Identity number is required.</p>
+                        <p class="helper-text">Old NIC: 9 digits + V/X | New NIC: 12 digits | Passport: 6-9 characters
+                        </p>
                     </div>
                     <div class="md:col-span-2">
                         <label class="label-style">Profile Photo (Optional)</label>
@@ -253,8 +257,9 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                         <label class="label-style">Email Address</label>
-                        <input type="email" id="email" class="input bg-slate-100 font-semibold" readonly>
-                        <p class="helper-text">Verified account email</p>
+                        <input type="email" id="email" class="input" placeholder="your.email@example.com" required>
+                        <p id="error-email" class="error-text">Valid email address is required.</p>
+                        <p class="helper-text">Your contact email address</p>
                     </div>
                     <div>
                         <label class="label-style">Mobile Phone Number</label>

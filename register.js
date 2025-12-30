@@ -186,5 +186,13 @@ export async function isUsernameTaken(username) {
   return false;
 }
 
+export async function saveAdminNote(userId, role, note) {
+  return API.saveAdminNote(userId, role, note);
+}
+
+export async function getAdminNote(userId, role) {
+  return API.getAdminNote(userId, role);
+}
+
 export const db = {};
 export { auth as app };

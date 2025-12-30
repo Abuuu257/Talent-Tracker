@@ -69,23 +69,76 @@ async function fetchAthletes() {
         allAthletes = athletes.filter(a => a.username || (a.personal && a.personal.fullName));
         filteredAthletes = [...allAthletes];
         renderAthletes();
+        updateFavoritesCount();
     } catch (err) {
         console.error("Error fetching athletes", err);
         if (grid) grid.innerHTML = `<p class="col-span-full text-center text-red-600 font-bold">Failed to load athletes.</p>`;
     }
 }
 
+function updateFavoritesCount() {
+    const countBadge = document.getElementById("favoritesCount");
+    const countNumber = document.getElementById("favCountNumber");
+
+    if (countBadge && countNumber) {
+        const count = coachFavorites.length;
+        countNumber.textContent = count;
+
+        if (count > 0) {
+            countBadge.classList.remove("hidden");
+        } else {
+            countBadge.classList.add("hidden");
+        }
+    }
+}
+
 function renderAthletes() {
     if (!grid) return;
     grid.innerHTML = "";
+
     if (filteredAthletes.length === 0) {
-        if (noResults) noResults.classList.remove("hidden");
+        if (noResults) {
+            // Check if the favorites filter is active
+            const isFavoritesFilterActive = favoritesToggle && favoritesToggle.checked;
+
+            if (isFavoritesFilterActive && coachFavorites.length === 0) {
+                // Show a special message for empty watchlist
+                noResults.innerHTML = `
+                    <div class="bg-white/50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Your Watchlist is Empty</h3>
+                    <p class="text-slate-600 mb-4">Click the ❤️ heart icon on athlete cards to add them to your watchlist.</p>
+                    <button onclick="document.getElementById('filterFavorites').click()" class="px-6 py-2 bg-[var(--primary)] text-white rounded-xl font-semibold hover:bg-[var(--secondary)] transition-all">
+                        Show All Athletes
+                    </button>
+                `;
+            } else {
+                // Show default no results message
+                noResults.innerHTML = `
+                    <div class="bg-white/50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800">No athletes found matching your filters</h3>
+                    <p class="text-slate-600">Try adjusting your search or filters.</p>
+                `;
+            }
+            noResults.classList.remove("hidden");
+        }
         return;
     }
+
     if (noResults) noResults.classList.add("hidden");
 
     filteredAthletes.forEach(athlete => {
-        const isFavorited = coachFavorites.includes(athlete.id);
+        // Convert both to strings for consistent comparison
+        const athleteIdStr = String(athlete.id);
+        const isFavorited = coachFavorites.some(favId => String(favId) === athleteIdStr);
+
         const displayName = athlete.personal?.fullName || athlete.username || "Athlete " + athlete.id;
         const city = athlete.personal?.city || "Not Specified";
         const category = athlete.athletic?.category || "TBD";
@@ -112,8 +165,8 @@ function renderAthletes() {
                 <img src="${profilePic}" class="w-full h-full object-cover" alt="${displayName}">
                 ${statusHTML}
                 
-                <button onclick="toggleFavorite('${athlete.id}')" class="absolute top-4 right-4 z-20 p-2 rounded-full bg-white/80 backdrop-blur shadow-sm hover:scale-110 transition-all">
-                    <svg class="w-5 h-5 ${isFavorited ? 'fill-red-500 stroke-red-500' : 'fill-none stroke-slate-400'}" viewBox="0 0 24 24">
+                <button onclick="toggleFavorite('${athleteIdStr}')" class="absolute top-4 right-4 z-20 p-2 rounded-full bg-white/80 backdrop-blur shadow-sm hover:scale-110 transition-all">
+                    <svg class="w-5 h-5 transition-all ${isFavorited ? 'fill-red-500 stroke-red-500' : 'fill-none stroke-slate-400'}" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                 </button>
@@ -148,19 +201,90 @@ function renderAthletes() {
 }
 
 window.toggleFavorite = async function (athleteId) {
-    if (!currentCoachId) return;
-    try {
-        if (coachFavorites.includes(athleteId)) {
-            await removeFavorite(currentCoachId, athleteId);
-            coachFavorites = coachFavorites.filter(id => id !== athleteId);
-        } else {
-            await addFavorite(currentCoachId, athleteId);
-            coachFavorites.push(athleteId);
-        }
-        renderAthletes(); // Re-render to update heart icon immediately
-    } catch (err) {
-        console.error("Fav error", err);
+    if (!currentCoachId) {
+        alert("Please log in to add favorites");
+        return;
     }
+
+    // Find the button that was clicked
+    const button = event.target.closest('button');
+    if (!button) return;
+
+    const heartIcon = button.querySelector('svg');
+
+    // Convert to string for consistent comparison
+    const athleteIdStr = String(athleteId);
+    const wasFavorited = coachFavorites.some(favId => String(favId) === athleteIdStr);
+
+    try {
+        // Add loading state
+        button.disabled = true;
+        button.classList.add('opacity-50');
+
+        if (wasFavorited) {
+            await removeFavorite(currentCoachId, athleteIdStr);
+            coachFavorites = coachFavorites.filter(id => String(id) !== athleteIdStr);
+
+            // Animate heart removal
+            heartIcon.classList.remove('fill-red-500', 'stroke-red-500');
+            heartIcon.classList.add('fill-none', 'stroke-slate-400');
+
+            // Show feedback
+            showToast("Removed from favorites", "info");
+        } else {
+            await addFavorite(currentCoachId, athleteIdStr);
+            coachFavorites.push(athleteIdStr);
+
+            // Animate heart addition
+            heartIcon.classList.remove('fill-none', 'stroke-slate-400');
+            heartIcon.classList.add('fill-red-500', 'stroke-red-500');
+
+            // Add bounce animation
+            button.classList.add('animate-bounce');
+            setTimeout(() => button.classList.remove('animate-bounce'), 500);
+
+            // Show feedback
+            showToast("Added to favorites ❤️", "success");
+        }
+
+        // Remove loading state
+        button.disabled = false;
+        button.classList.remove('opacity-50');
+
+        // Update the favorites count badge
+        updateFavoritesCount();
+
+        // Re-apply filters to update the view if watchlist filter is active
+        applyFilters();
+
+    } catch (err) {
+        console.error("Favorite error:", err);
+        button.disabled = false;
+        button.classList.remove('opacity-50');
+        showToast("Failed to update favorites. Please try again.", "error");
+    }
+}
+
+// Toast notification function
+function showToast(message, type = "info") {
+    const toast = document.createElement('div');
+    const bgColor = type === "success" ? "bg-green-500" : type === "error" ? "bg-red-500" : "bg-blue-500";
+
+    toast.className = `fixed bottom-8 right-8 ${bgColor} text-white px-6 py-3 rounded-2xl shadow-2xl z-[200] font-semibold text-sm flex items-center gap-2 animate-slide-up`;
+    toast.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        ${message}
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
 }
 
 function applyFilters() {
@@ -178,7 +302,9 @@ function applyFilters() {
         const matchesSport = sport === "all" || events.some(e => e.event === sport);
 
         const matchesCat = cat === "all" || (a.athletic?.category === cat);
-        const matchesFav = !favs || coachFavorites.includes(a.id);
+
+        // Convert both to strings for consistent comparison
+        const matchesFav = !favs || coachFavorites.some(favId => String(favId) === String(a.id));
 
         return matchesTerm && matchesSport && matchesCat && matchesFav;
     });

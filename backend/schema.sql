@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS athletes (
     id_doc_url TEXT,
     consent_doc_url TEXT,
     club_id_doc_url TEXT,
+    admin_notes TEXT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -103,6 +104,7 @@ CREATE TABLE IF NOT EXISTS coaches (
     location_preference VARCHAR(255),
     status VARCHAR(50) DEFAULT 'Pending',
     profile_pic_url TEXT,
+    admin_notes TEXT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -164,4 +166,28 @@ CREATE TABLE IF NOT EXISTS event_registrations (
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
     FOREIGN KEY (athlete_id) REFERENCES athletes(user_id) ON DELETE CASCADE,
     UNIQUE KEY unique_registration (event_id, athlete_id)
+);
+
+-- Coach Favorites (Watchlist)
+CREATE TABLE IF NOT EXISTS coach_favorites (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    coach_id INT NOT NULL,
+    athlete_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (coach_id) REFERENCES coaches(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (athlete_id) REFERENCES athletes(user_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_favorite (coach_id, athlete_id)
+);
+
+-- Coach Notes (Private notes about athletes)
+CREATE TABLE IF NOT EXISTS coach_notes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    coach_id INT NOT NULL,
+    athlete_id INT NOT NULL,
+    note TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (coach_id) REFERENCES coaches(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (athlete_id) REFERENCES athletes(user_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_note (coach_id, athlete_id)
 );

@@ -72,6 +72,36 @@ export async function removeFavorite(coachId, athleteId) {
     return res.json();
 }
 
+// Coach Notes
+export async function saveCoachNote(coachId, athleteId, note) {
+    console.log(`API: Saving note to ${API_URL}/coach/${coachId}/note/${athleteId}`);
+
+    const res = await fetch(`${API_URL}/coach/${coachId}/note/${athleteId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note })
+    });
+
+    if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Save note failed:', res.status, errorText);
+        throw new Error(`Failed to save coach note (${res.status}): ${errorText}`);
+    }
+
+    return res.json();
+}
+
+export async function getCoachNote(coachId, athleteId) {
+    const res = await fetch(`${API_URL}/coach/${coachId}/note/${athleteId}`);
+    if (!res.ok) {
+        if (res.status === 404) return { note: '' }; // No note exists yet
+        const errorText = await res.text();
+        console.error('Get note failed:', res.status, errorText);
+        throw new Error(`Failed to fetch coach note (${res.status}): ${errorText}`);
+    }
+    return res.json();
+}
+
 export async function updateUserStatus(uid, status, role) {
     const endpoint = role === 'coach' ? 'coach' : 'athlete';
     // If we have a 'role' parameter, we should trust it, but defaulting is okay.
@@ -260,5 +290,27 @@ export async function registerForEvent(eventId, athleteId) {
 export async function getAthleteRegistrations(athleteId) {
     const res = await fetch(`${API_URL}/events/athlete/${athleteId}/registrations`);
     if (!res.ok) throw new Error('Failed to fetch registrations');
+    return res.json();
+}
+
+// Admin Notes API
+export async function saveAdminNote(userId, role, note) {
+    const endpoint = role === 'coach' ? 'coach' : 'athlete';
+    const res = await fetch(`${API_URL}/${endpoint}/${userId}/admin-note`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note })
+    });
+    if (!res.ok) throw new Error('Failed to save admin note');
+    return res.json();
+}
+
+export async function getAdminNote(userId, role) {
+    const endpoint = role === 'coach' ? 'coach' : 'athlete';
+    const res = await fetch(`${API_URL}/${endpoint}/${userId}/admin-note`);
+    if (!res.ok) {
+        if (res.status === 404) return { note: '' }; // No note exists yet
+        throw new Error('Failed to fetch admin note');
+    }
     return res.json();
 }

@@ -84,6 +84,15 @@ onAuthChange(async (user) => {
     } catch (err) {
         console.error("Error checking coach profile:", err);
     }
+
+    // Set max date for DOB to ensure coaches are at least 22 years old
+    const dobInput = document.getElementById("dob");
+    if (dobInput) {
+        const today = new Date();
+        const maxDate = new Date(today.getFullYear() - 22, today.getMonth(), today.getDate());
+        const maxDateString = maxDate.toISOString().split('T')[0];
+        dobInput.setAttribute('max', maxDateString);
+    }
 });
 
 const photoInput = document.getElementById("coachPhoto");
@@ -139,12 +148,24 @@ form.addEventListener("submit", async (e) => {
 
     const requiredFields = [
         "fullName", "gender", "dob", "nationality", "nic",
-        "phone", "street", "city", "district", "province",
+        "email", "phone", "street", "city", "district", "province",
         "sports", "coachingLevel", "coachingRole", "experience", "organization",
         "highestQual", "issuingAuthority", "certId"
     ];
 
     requiredFields.forEach(validateField);
+
+    // Email format validation
+    const emailInput = document.getElementById("email");
+    if (emailInput.value) {
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(emailInput.value)) {
+            document.getElementById("error-email").textContent = "Please enter a valid email address";
+            document.getElementById("error-email").classList.add("visible");
+            emailInput.classList.add("input-error");
+            isValid = false;
+        }
+    }
 
     const dobInput = document.getElementById("dob");
     if (dobInput.value) {
@@ -152,9 +173,15 @@ form.addEventListener("submit", async (e) => {
         const today = new Date();
         let age = today.getFullYear() - dob.getFullYear();
         if (today.getMonth() < dob.getMonth() || (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate())) age--;
-        if (age < 14 || age > 100) {
-            document.getElementById("error-dob").textContent = "Invalid age (Min 14)";
+        if (age < 22) {
+            document.getElementById("error-dob").textContent = "You must be at least 22 years old to register as a coach";
             document.getElementById("error-dob").classList.add("visible");
+            dobInput.classList.add("input-error");
+            isValid = false;
+        } else if (age > 100) {
+            document.getElementById("error-dob").textContent = "Invalid age (Max 100)";
+            document.getElementById("error-dob").classList.add("visible");
+            dobInput.classList.add("input-error");
             isValid = false;
         }
     }
@@ -174,10 +201,28 @@ form.addEventListener("submit", async (e) => {
     }
 
     const nicInput = document.getElementById("nic");
-    if (nicInput.value && nicInput.value.length < 5) {
-        document.getElementById("error-nic").textContent = "Invalid NIC/Passport";
-        document.getElementById("error-nic").classList.add("visible");
-        isValid = false;
+    if (nicInput.value) {
+        const nicValue = nicInput.value.trim().toUpperCase();
+
+        // Sri Lankan NIC patterns:
+        // Old format: 9 digits + V or X (e.g., 123456789V)
+        // New format: 12 digits (e.g., 200012345678)
+        // Passport: Alphanumeric, typically 6-9 characters (e.g., N1234567)
+
+        const oldNicPattern = /^[0-9]{9}[VX]$/;
+        const newNicPattern = /^[0-9]{12}$/;
+        const passportPattern = /^[A-Z0-9]{6,9}$/;
+
+        const isValidOldNic = oldNicPattern.test(nicValue);
+        const isValidNewNic = newNicPattern.test(nicValue);
+        const isValidPassport = passportPattern.test(nicValue);
+
+        if (!isValidOldNic && !isValidNewNic && !isValidPassport) {
+            document.getElementById("error-nic").textContent = "Invalid format. Use: 9 digits+V/X, 12 digits, or passport (6-9 chars)";
+            document.getElementById("error-nic").classList.add("visible");
+            nicInput.classList.add("input-error");
+            isValid = false;
+        }
     }
 
     const certInput = document.getElementById("certDoc");

@@ -4,6 +4,8 @@ import {
     getAthleteProfile,
     getCoachProfile,
     updateUserStatus,
+    saveAdminNote,
+    getAdminNote,
     BACKEND_URL
 } from "./register.js";
 import { updateNavbar } from "./ui-utils.js";
@@ -21,6 +23,8 @@ const docsList = document.getElementById("docsList");
 
 const btnApprove = document.getElementById("btnApprove");
 const btnRevoke = document.getElementById("btnRevoke");
+const adminNotesTextarea = document.getElementById("adminNotesTextarea");
+const saveNoteBtn = document.getElementById("saveNoteBtn");
 
 let targetId = null;
 let targetRole = null; // 'athlete' or 'coach'
@@ -68,6 +72,7 @@ onAuthChange(async (user) => {
         if (data && data.exists) {
             currentUserData = data;
             renderProfile(data);
+            loadAdminNotes(); // Load saved admin notes
         } else {
             alert("User profile not found.");
             window.location.href = "federation-home.html";
@@ -235,6 +240,53 @@ function docItem(label, url) {
         </div>
     `;
 }
+
+// Load Admin Notes
+async function loadAdminNotes() {
+    if (!targetId || !targetRole) return;
+
+    try {
+        const response = await getAdminNote(targetId, targetRole);
+        if (response && response.note) {
+            adminNotesTextarea.value = response.note;
+        }
+    } catch (err) {
+        console.error("Error loading admin notes:", err);
+        // Don't show error to user, just log it
+    }
+}
+
+// Save Admin Notes
+async function saveAdminNoteHandler() {
+    if (!targetId || !targetRole) return;
+
+    const note = adminNotesTextarea.value.trim();
+    const originalText = saveNoteBtn.textContent;
+
+    try {
+        saveNoteBtn.textContent = "Saving...";
+        saveNoteBtn.disabled = true;
+
+        await saveAdminNote(targetId, targetRole, note);
+
+        saveNoteBtn.textContent = "Saved!";
+        setTimeout(() => {
+            saveNoteBtn.textContent = originalText;
+        }, 2000);
+    } catch (err) {
+        console.error("Error saving admin note:", err);
+        alert("Failed to save note. Please try again.");
+        saveNoteBtn.textContent = originalText;
+    } finally {
+        saveNoteBtn.disabled = false;
+    }
+}
+
+// Add event listener for save button
+if (saveNoteBtn) {
+    saveNoteBtn.addEventListener("click", saveAdminNoteHandler);
+}
+
 // Logout Logic
 if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {

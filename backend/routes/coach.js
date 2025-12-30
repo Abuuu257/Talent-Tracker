@@ -226,4 +226,170 @@ router.delete('/:id/squad/:squadId', async (req, res) => {
     }
 });
 
+// Save Admin Note
+router.post('/:id/admin-note', async (req, res) => {
+    const { note } = req.body;
+    try {
+        await db.query(
+            'UPDATE coaches SET admin_notes = ? WHERE user_id = ?',
+            [note, req.params.id]
+        );
+        res.json({ message: 'Admin note saved' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error saving admin note' });
+    }
+});
+
+// Get Admin Note
+router.get('/:id/admin-note', async (req, res) => {
+    try {
+        const [coaches] = await db.query(
+            'SELECT admin_notes FROM coaches WHERE user_id = ?',
+            [req.params.id]
+        );
+        if (coaches.length === 0) {
+            return res.status(404).json({ error: 'Coach not found' });
+        }
+        res.json({ note: coaches[0].admin_notes || '' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error fetching admin note' });
+    }
+});
+
+// Add Favorite
+router.post('/:id/favorite', async (req, res) => {
+    const { athleteId } = req.body;
+    const coachId = req.params.id;
+
+    try {
+        // Check if already favorited
+        const [existing] = await db.query(
+            'SELECT * FROM coach_favorites WHERE coach_id = ? AND athlete_id = ?',
+            [coachId, athleteId]
+        );
+
+        if (existing.length > 0) {
+            return res.json({ message: 'Already favorited' });
+        }
+
+        // Add to favorites
+        await db.query(
+            'INSERT INTO coach_favorites (coach_id, athlete_id) VALUES (?, ?)',
+            [coachId, athleteId]
+        );
+
+        res.json({ message: 'Favorite added successfully' });
+    } catch (error) {
+        console.error('Error adding favorite:', error);
+        res.status(500).json({ error: 'Error adding favorite' });
+    }
+});
+
+// Remove Favorite
+router.delete('/:id/favorite/:athleteId', async (req, res) => {
+    const { id: coachId, athleteId } = req.params;
+
+    try {
+        await db.query(
+            'DELETE FROM coach_favorites WHERE coach_id = ? AND athlete_id = ?',
+            [coachId, athleteId]
+        );
+
+        res.json({ message: 'Favorite removed successfully' });
+    } catch (error) {
+        console.error('Error removing favorite:', error);
+        res.status(500).json({ error: 'Error removing favorite' });
+    }
+});
+
+// Save Coach Note about an Athlete
+router.post('/:id/note/:athleteId', async (req, res) => {
+    const { note } = req.body;
+    const userId = req.params.id; // MySQL user ID
+    const athleteId = parseInt(req.params.athleteId);
+
+    console.log('Saving coach note:', { userId, athleteId, noteLength: note?.length });
+
+    try {
+        // Check if user exists and is a coach
+        const [users] = await db.query('SELECT id, role FROM users WHERE id = ?', [userId]);
+        if (users.length === 0) {
+            console.error('User not found:', userId);
+            return res.status(404).json({ error: 'User not found. Please log in again.' });
+        }
+
+        if (users[0].role !== 'coach') {
+            console.error('User is not a coach:', userId, users[0].role);
+            return res.status(403).json({ error: 'Only coaches can save notes.' });
+        }
+
+        console.log('User verified as coach:', userId);
+
+        // Check if coach profile exists
+        const [coaches] = await db.query('SELECT user_id FROM coaches WHERE user_id = ?', [userId]);
+        if (coaches.length === 0) {
+            console.error('Coach profile not found for user_id:', userId);
+            return res.status(404).json({ error: 'Coach profile not found. Please complete your profile first.' });
+        }
+
+        // Check if athlete exists
+        const [athletes] = await db.query('SELECT user_id FROM athletes WHERE user_id = ?', [athleteId]);
+        if (athletes.length === 0) {
+            console.error('Athlete not found:', athleteId);
+            return res.status(404).json({ error: 'Athlete not found' });
+        }
+
+        // Check if note already exists
+        const [existing] = await db.query(
+            'SELECT * FROM coach_notes WHERE coach_id = ? AND athlete_id = ?',
+            [userId, athleteId]
+        );
+
+        if (existing.length > 0) {
+            // Update existing note
+            await db.query(
+                'UPDATE coach_notes SET note = ?, updated_at = CURRENT_TIMESTAMP WHERE coach_id = ? AND athlete_id = ?',
+                [note, userId, athleteId]
+            );
+            console.log('Note updated successfully');
+        } else {
+            // Insert new note
+            await db.query(
+                'INSERT INTO coach_notes (coach_id, athlete_id, note) VALUES (?, ?, ?)',
+                [userId, athleteId, note]
+            );
+            console.log('Note created successfully');
+        }
+
+        res.json({ message: 'Coach note saved successfully' });
+    } catch (error) {
+        console.error('Error saving coach note:', error);
+        res.status(500).json({ error: 'Error saving coach note', details: error.message });
+    }
+});
+
+// Get Coach Note about an Athlete
+router.get('/:id/note/:athleteId', async (req, res) => {
+    const userId = req.params.id; // MySQL user ID
+    const athleteId = parseInt(req.params.athleteId);
+
+    try {
+        const [notes] = await db.query(
+            'SELECT note FROM coach_notes WHERE coach_id = ? AND athlete_id = ?',
+            [userId, athleteId]
+        );
+
+        if (notes.length === 0) {
+            return res.status(404).json({ note: '' });
+        }
+
+        res.json({ note: notes[0].note || '' });
+    } catch (error) {
+        console.error('Error fetching coach note:', error);
+        res.status(500).json({ error: 'Error fetching coach note' });
+    }
+});
+
 module.exports = router;

@@ -280,4 +280,36 @@ router.post('/:id/status', async (req, res) => {
     }
 });
 
+// Save Admin Note
+router.post('/:id/admin-note', async (req, res) => {
+    const { note } = req.body;
+    try {
+        await db.query(
+            'UPDATE athletes SET admin_notes = ? WHERE user_id = ?',
+            [note, req.params.id]
+        );
+        res.json({ message: 'Admin note saved' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error saving admin note' });
+    }
+});
+
+// Get Admin Note
+router.get('/:id/admin-note', async (req, res) => {
+    try {
+        const [athletes] = await db.query(
+            'SELECT admin_notes FROM athletes WHERE user_id = ?',
+            [req.params.id]
+        );
+        if (athletes.length === 0) {
+            return res.status(404).json({ error: 'Athlete not found' });
+        }
+        res.json({ note: athletes[0].admin_notes || '' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error fetching admin note' });
+    }
+});
+
 module.exports = router;

@@ -1,4 +1,4 @@
-import { auth, onAuthChange } from "./register.js";
+import { auth, onAuthChange, signOut } from "./register.js";
 import * as API from "./api.js";
 import { showAlert, showConfirm, updateNavbar, showLoading, hideLoading } from "./ui-utils.js";
 
@@ -44,8 +44,72 @@ onAuthChange(async (user) => {
 
 async function init() {
     updateNavbar(currentUser, null);
+    setupNavbarInteractions();
     setupNavigation();
     await loadEvents();
+}
+
+function setupNavbarInteractions() {
+    // Desktop dropdown toggle
+    const navUserBtn = document.getElementById("navUserBtn");
+    const navUserDropdown = document.getElementById("navUserDropdown");
+
+    if (navUserBtn && navUserDropdown) {
+        navUserBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            navUserDropdown.classList.toggle("hidden");
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener("click", () => {
+            if (!navUserDropdown.classList.contains("hidden")) {
+                navUserDropdown.classList.add("hidden");
+            }
+        });
+    }
+
+    // Mobile menu toggle
+    const mobileMenuButton = document.getElementById("mobileMenuButton");
+    const mobileMenu = document.getElementById("mobileMenu");
+    const mobileBackBtn = document.getElementById("mobileBackBtn");
+    const mobileMenuBackdrop = document.getElementById("mobileMenuBackdrop");
+
+    if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener("click", () => {
+            mobileMenu.classList.remove("translate-x-full");
+            mobileMenuBackdrop.classList.remove("hidden");
+            setTimeout(() => mobileMenuBackdrop.classList.remove("opacity-0"), 10);
+        });
+
+        const closeMobileMenu = () => {
+            mobileMenu.classList.add("translate-x-full");
+            mobileMenuBackdrop.classList.add("opacity-0");
+            setTimeout(() => mobileMenuBackdrop.classList.add("hidden"), 300);
+        };
+
+        if (mobileBackBtn) mobileBackBtn.addEventListener("click", closeMobileMenu);
+        if (mobileMenuBackdrop) mobileMenuBackdrop.addEventListener("click", closeMobileMenu);
+    }
+
+    // Logout buttons
+    const logoutBtn = document.getElementById("logoutBtn");
+    const mobileLogoutBtn = document.getElementById("mobileLogoutBtn");
+
+    const handleLogout = async () => {
+        try {
+            await signOut();
+            localStorage.removeItem("tt_username");
+            localStorage.removeItem("tt_role");
+            localStorage.removeItem("user");
+            localStorage.removeItem("token");
+            window.location.href = "index.html";
+        } catch (error) {
+            console.error("Logout Error", error);
+        }
+    };
+
+    if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
+    if (mobileLogoutBtn) mobileLogoutBtn.addEventListener("click", handleLogout);
 }
 
 function setupNavigation() {
